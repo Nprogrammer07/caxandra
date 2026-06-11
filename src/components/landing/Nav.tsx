@@ -1,6 +1,10 @@
 'use client'
 
-export default function Nav() {
+import Link from 'next/link'
+
+type NavUser = { email?: string } | null
+
+export default function Nav({ user }: { user: NavUser }) {
   const toPlanes = () => document.getElementById('planes')?.scrollIntoView({ behavior: 'smooth' })
 
   return (
@@ -18,7 +22,19 @@ export default function Nav() {
           <a href="#planes">Planes</a>
         </nav>
 
-        <button className="nav-cta" onClick={toPlanes}>Ver Planes</button>
+        <div className="nav-auth">
+          {user ? (
+            // Con sesión: acceso directo al panel.
+            <Link href="/dashboard" className="nav-cta">Mi panel</Link>
+          ) : (
+            // Sin sesión: entrar o registrarse.
+            <>
+              <Link href="/login" className="nav-login">Iniciar sesión</Link>
+              <Link href="/register" className="nav-cta">Registrarme</Link>
+            </>
+          )}
+        </div>
+
         <button className="burger" aria-label="Menú" onClick={toPlanes}>
           <span /><span /><span />
         </button>

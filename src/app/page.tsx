@@ -1,3 +1,4 @@
+import { createClient } from '@/utils/supabase/server'
 import Background from '@/components/landing/Background'
 import Nav from '@/components/landing/Nav'
 import Hero from '@/components/landing/Hero'
@@ -8,11 +9,14 @@ import Footer from '@/components/landing/Footer'
 import WhatsAppFab from '@/components/landing/WhatsAppFab'
 import Reveal from '@/components/landing/Reveal'
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
     <>
       <Background />
-      <Nav />
+      <Nav user={user ? { email: user.email } : null} />
       <div className="wrap">
         <div className="layout">
           <div className="col-main">
