@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { signOut } from '@/app/(auth)/actions'
 
 type NavUser = { email?: string } | null
 
@@ -24,10 +25,18 @@ export default function Nav({ user }: { user: NavUser }) {
 
         <div className="nav-auth">
           {user ? (
-            // Con sesión: acceso directo al panel.
-            <Link href="/dashboard" className="nav-cta">Mi panel</Link>
+            <>
+              <span className="nav-avatar" title={user.email}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+                </svg>
+              </span>
+              <form action={signOut}>
+                <button type="submit" className="nav-login">Cerrar sesión</button>
+              </form>
+            </>
           ) : (
-            // Sin sesión: entrar o registrarse.
             <>
               <Link href="/login" className="nav-login">Iniciar sesión</Link>
               <Link href="/register" className="nav-cta">Registrarme</Link>

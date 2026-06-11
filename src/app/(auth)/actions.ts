@@ -22,7 +22,7 @@ export async function login(_prev: AuthState, formData: FormData): Promise<AuthS
 
   // Refresca los datos de sesión en toda la app y manda al panel.
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  redirect('/')
 }
 
 export async function signup(_prev: AuthState, formData: FormData): Promise<AuthState> {
@@ -44,9 +44,16 @@ export async function signup(_prev: AuthState, formData: FormData): Promise<Auth
   // el usuario queda logueado y lo mandamos al panel.
   if (data.session) {
     revalidatePath('/', 'layout')
-    redirect('/dashboard')
+    redirect('/')
   }
 
   // Si está ACTIVADA, no hay sesión todavía: debe confirmar desde el correo.
   return { success: 'Te enviamos un correo. Confírmalo para activar tu cuenta.' }
+}
+
+export async function signOut() {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  revalidatePath('/', 'layout')
+  redirect('/')
 }

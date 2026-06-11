@@ -303,30 +303,44 @@ footer{position:relative;z-index:2;border-top:1px solid var(--border);margin-top
 
 /* ===== AUTH ===== */
 .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;z-index:2}
-.auth-card{width:100%;max-width:420px;border:1px solid var(--border);border-radius:20px;
-  background:linear-gradient(180deg,var(--panel),var(--bg-2));padding:34px 30px;box-shadow:0 0 60px rgba(184,255,32,.08)}
-.auth-logo{display:flex;align-items:center;gap:12px;justify-content:center;text-decoration:none;margin-bottom:22px}
+.auth-card{position:relative;width:100%;max-width:430px;border:1px solid var(--border);border-radius:22px;
+  background:linear-gradient(180deg,rgba(11,18,13,.92),rgba(7,13,9,.95));padding:40px 32px 32px;
+  box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 70px rgba(184,255,32,.08);overflow:hidden}
+.auth-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:.7}
+.auth-back{position:absolute;top:15px;left:18px;color:var(--gray-2);text-decoration:none;font-size:.78rem;transition:color .2s}
+.auth-back:hover{color:var(--neon)}
+.auth-logo{display:flex;align-items:center;gap:12px;justify-content:center;text-decoration:none;margin:8px 0 5px}
+.auth-logo img{object-fit:contain}
 .auth-logo span{font-family:var(--font-d);font-weight:700;font-size:1.3rem;letter-spacing:.2em;color:var(--white)}
 .auth-logo b{color:var(--neon)}
-.auth-title{font-family:var(--font-d);font-weight:700;font-size:1.5rem;text-align:center}
-.auth-sub{color:var(--gray);font-size:.9rem;text-align:center;margin:6px 0 24px}
+.auth-tag{text-align:center;font-family:var(--font-d);font-size:.56rem;letter-spacing:.34em;color:var(--gray-2);margin-bottom:28px}
+.auth-tag span{color:var(--neon)}
+.auth-title{font-family:var(--font-d);font-weight:700;font-size:1.55rem;text-align:center}
+.auth-sub{color:var(--gray);font-size:.9rem;text-align:center;margin:6px 0 26px}
 .auth-form{display:flex;flex-direction:column;gap:16px}
 .auth-field{display:flex;flex-direction:column;gap:7px}
 .auth-field span{font-size:.78rem;color:var(--gray);letter-spacing:.04em}
 .auth-field input{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:11px;
-  padding:12px 14px;color:var(--white);font-size:.95rem;font-family:var(--font-b);transition:.2s}
+  padding:13px 15px;color:var(--white);font-size:.95rem;font-family:var(--font-b);transition:.2s}
+.auth-field input::placeholder{color:var(--gray-2)}
 .auth-field input:focus{outline:none;border-color:var(--neon);box-shadow:0 0 0 3px rgba(184,255,32,.12)}
-.auth-msg{font-size:.84rem;padding:10px 13px;border-radius:10px;margin:0}
+.auth-form .btn{margin-top:4px}
+.auth-msg{font-size:.84rem;padding:11px 14px;border-radius:10px;margin:0}
 .auth-msg.error{color:#ff9b9b;background:rgba(255,80,80,.08);border:1px solid rgba(255,80,80,.25)}
 .auth-msg.ok{color:var(--neon);background:rgba(184,255,32,.07);border:1px solid rgba(184,255,32,.25)}
-.auth-alt{text-align:center;color:var(--gray);font-size:.86rem;margin-top:20px}
-.auth-alt a{color:var(--neon);text-decoration:none}
+.auth-alt{text-align:center;color:var(--gray);font-size:.86rem;margin-top:22px;padding-top:20px;border-top:1px solid var(--border)}
+.auth-alt a{color:var(--neon);text-decoration:none;font-weight:600}
 .auth-alt a:hover{text-decoration:underline}
 
 
 /* nav auth */
 .nav-auth{display:flex;align-items:center;gap:16px}
-.nav-login{color:var(--gray);text-decoration:none;font-size:.9rem;font-weight:500;transition:color .2s}
+.nav-auth form{display:flex}
+.nav-login{color:var(--gray);text-decoration:none;font-size:.9rem;font-weight:500;transition:color .2s;
+  background:none;border:none;cursor:pointer;font-family:var(--font-b);padding:0}
 .nav-login:hover{color:var(--neon)}
 a.nav-cta{text-decoration:none}
+.nav-avatar{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;
+  border:1px solid var(--border);color:var(--gray);background:rgba(255,255,255,.02)}
 @media(max-width:560px){.nav-login{display:none}}
