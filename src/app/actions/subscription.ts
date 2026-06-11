@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { canSubscribe } from '@/lib/subscription-rules'
 
 type Result = { ok: true } | { ok: false; error: string }
 
@@ -31,8 +32,9 @@ export async function subscribeToPackage(packageId: string): Promise<Result> {
     .eq('status', 'active')
     .maybeSingle()
 
-  if (current && pkg.daily_rate < current.daily_rate) {
-    return { ok: false, error: 'Solo puedes mejorar tu plan, no bajarlo.' }
+  const decision = canSubscribe(current?.daily_rate ?? null, pkg.daily_rate)
+  if (!decision.allowed) {
+    return { ok: false, error: decision.reason }
   }
 
   // La mejora REEMPLAZA: vencemos la activa anterior (sin sumar saldo).
