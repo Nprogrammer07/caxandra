@@ -2,56 +2,35 @@
 
 import { useState } from 'react'
 import BuyModal from './BuyModal'
+import type { Package } from '@/types'
 
-export default function PlansPanel() {
-  // El "estado" del modal: null = cerrado. Si tiene datos, el modal se abre con ese plan.
-  // Cuando llamamos setBuy(...), React vuelve a dibujar el componente solo.
-  const [buy, setBuy] = useState<{ plan: string; price: string } | null>(null)
+export default function PlansPanel({ packages }: { packages: Package[] }) {
+  const [buy, setBuy] = useState<{ id: string; plan: string; price: string } | null>(null)
 
   return (
     <>
       <div className="plans">
         <div className="plans-head">PLANES PREMIUM</div>
 
-        <div className="plan">
-          <div className="qty">30 PREDICCIONES</div>
-          <div className="per">Mensuales</div>
-          <div className="price"><span className="cur">$</span>1.99</div>
-          <div className="unit">USD / mes</div>
-          <button
-            className="btn btn-ghost buy"
-            onClick={() => setBuy({ plan: '30 Predicciones Mensuales', price: '1.99' })}
-          >
-            <CardIcon /> Comprar con Crypto
-          </button>
-        </div>
-
-        <div className="plan featured">
-          <div className="ribbon">POPULAR</div>
-          <div className="qty">90 PREDICCIONES</div>
-          <div className="per">Mensuales</div>
-          <div className="price"><span className="cur">$</span>4.99</div>
-          <div className="unit">USD / mes</div>
-          <button
-            className="btn btn-primary buy"
-            onClick={() => setBuy({ plan: '90 Predicciones Mensuales', price: '4.99' })}
-          >
-            <CardIcon /> Comprar con Crypto
-          </button>
-        </div>
-
-        <div className="plan">
-          <div className="qty">240 PREDICCIONES</div>
-          <div className="per">Mensuales</div>
-          <div className="price"><span className="cur">$</span>8.99</div>
-          <div className="unit">USD / mes</div>
-          <button
-            className="btn btn-ghost buy"
-            onClick={() => setBuy({ plan: '240 Predicciones Mensuales', price: '8.99' })}
-          >
-            <CardIcon /> Comprar con Crypto
-          </button>
-        </div>
+        {packages.map((pkg) => {
+          // El plan de 90 (ritmo 3) lo marcamos como destacado.
+          const featured = pkg.daily_rate === 3
+          return (
+            <div key={pkg.id} className={`plan${featured ? ' featured' : ''}`}>
+              {featured && <div className="ribbon">POPULAR</div>}
+              <div className="qty">{pkg.total_predictions} PREDICCIONES</div>
+              <div className="per">Mensuales</div>
+              <div className="price"><span className="cur">$</span>{pkg.price_usd.toFixed(2)}</div>
+              <div className="unit">USD / mes</div>
+              <button
+                className={`btn ${featured ? 'btn-primary' : 'btn-ghost'} buy`}
+                onClick={() => setBuy({ id: pkg.id, plan: pkg.name, price: pkg.price_usd.toFixed(2) })}
+              >
+                <CardIcon /> Comprar con Crypto
+              </button>
+            </div>
+          )
+        })}
 
         <div className="secure">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -62,15 +41,11 @@ export default function PlansPanel() {
         </div>
       </div>
 
-      {/* Renderizado condicional: el modal SOLO existe en pantalla cuando "buy" tiene datos. */}
-      {buy && (
-        <BuyModal plan={buy.plan} price={buy.price} onClose={() => setBuy(null)} />
-      )}
+      {buy && <BuyModal packageId={buy.id} plan={buy.plan} price={buy.price} onClose={() => setBuy(null)} />}
     </>
   )
 }
 
-// Un mini-componente reutilizable para no repetir el SVG en los tres botones.
 function CardIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

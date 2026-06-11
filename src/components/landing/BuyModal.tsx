@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { subscribeToPackage } from '@/app/actions/subscription'
 
 type Coin = 'BTC' | 'ETH' | 'USDT'
 
@@ -44,10 +45,12 @@ function buildQr(): boolean[] {
 }
 
 export default function BuyModal({
+  packageId,
   plan,
   price,
   onClose,
 }: {
+  packageId: string
   plan: string
   price: string
   onClose: () => void
@@ -80,9 +83,15 @@ export default function BuyModal({
     setTimeout(() => setCopied(false), 1200)
   }
 
-  const simulate = () => {
+  const simulate = async () => {
     setStatus('processing')
-    setTimeout(() => setStatus('paid'), 2600)
+    const result = await subscribeToPackage(packageId)
+    if (result.ok) {
+      setStatus('paid')
+    } else {
+      setStatus('idle')
+      alert(result.error) // provisional; luego lo mostramos más bonito
+    }
   }
 
   if (!mounted) return null

@@ -13,6 +13,12 @@ export default async function Home() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  const { data: packages } = await supabase
+    .from('packages')
+    .select('id, slug, name, total_predictions, daily_rate, price_usd')
+    .eq('active', true)
+    .order('sort_order')
+
   return (
     <>
       <Background />
@@ -25,7 +31,7 @@ export default async function Home() {
             <Reveal><Modules /></Reveal>
           </div>
           <aside className="col-side" id="planes">
-            <Reveal><PlansPanel /></Reveal>
+            <Reveal><PlansPanel packages={packages ?? []} /></Reveal>
           </aside>
         </div>
       </div>
