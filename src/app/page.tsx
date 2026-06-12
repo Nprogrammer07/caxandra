@@ -12,6 +12,16 @@ import Reveal from '@/components/landing/Reveal'
 export default async function Home() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  let predictionsLeft: number | null = null
+  if (user) {
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('remaining_predictions')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .maybeSingle()
+    predictionsLeft = sub?.remaining_predictions ?? null
+  }
 
   const { data: packages } = await supabase
     .from('packages')
@@ -22,7 +32,7 @@ export default async function Home() {
   return (
     <>
       <Background />
-      <Nav user={user ? { email: user.email } : null} />
+      <Nav user={user ? { email: user.email } : null} predictionsLeft={predictionsLeft} />
       <div className="wrap">
         <div className="layout">
           <div className="col-main">

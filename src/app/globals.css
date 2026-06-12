@@ -344,3 +344,10 @@ a.nav-cta{text-decoration:none}
 .nav-avatar{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;
   border:1px solid var(--border);color:var(--gray);background:rgba(255,255,255,.02)}
 @media(max-width:560px){.nav-login{display:none}}
+
+/* píldora de pronósticos restantes */
+.nav-credits{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-d);font-weight:600;
+  font-size:.82rem;color:var(--neon);border:1px solid rgba(184,255,32,.3);background:rgba(184,255,32,.06);
+  padding:6px 12px;border-radius:30px;line-height:1}
+.nav-credits svg{display:block}
+@media(max-width:560px){.nav-credits{padding:5px 9px;font-size:.78rem}}

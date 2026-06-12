@@ -4,20 +4,25 @@ import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { selectPredictionsForUser, type DayPrediction } from '@/lib/predictions'
 import { colombiaToday } from '@/lib/date'
+import { sendEmail } from '@/lib/email'
+import { dailyPredictionsEmail, subscriptionExpiredEmail } from '@/lib/email-templates'
+
+const PDF_BUCKET = 'prediction-pdfs'
 
 type SendResult =
   | { ok: false; error: string }
   | {
       ok: true
       date: string
-      predictions: number     // cuántos pronósticos había hoy
-      usersNotified: number    // a cuántos usuarios se les envió algo
-      totalDeliveries: number  // total de entregas registradas
-      expiredUsers: number     // cuántos quedaron sin saldo (vencidos)
+      predictions: number
+      usersNotified: number
+      totalDeliveries: number
+      expiredUsers: number
+      emailsFailed: number
     }
 
 export async function sendTodaysPredictions(matchDate?: string): Promise<SendResult> {
-  // 1) SOLO el admin puede disparar el envío.
+  // 1) SOLO el admin.
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, error: 'No autenticado.' }
@@ -32,10 +37,10 @@ export async function sendTodaysPredictions(matchDate?: string): Promise<SendRes
   const date = matchDate ?? colombiaToday()
   const admin = createAdminClient()
 
-  // 2) Pronósticos del día.
+  // 2) Pronósticos del día (con título y la ruta de su PDF).
   const { data: predictions } = await admin
     .from('predictions')
-    .select('id, position')
+    .select('id, position, title, pdf_path')
     .eq('match_date', date)
     .order('position')
 
@@ -43,8 +48,9 @@ export async function sendTodaysPredictions(matchDate?: string): Promise<SendRes
     return { ok: false, error: `No hay pronósticos publicados para ${date}.` }
   }
   const predIds = predictions.map((p) => p.id)
+  const predMap = new Map(predictions.map((p) => [p.id, p]))
 
-  // 3) Entregas ya hechas de ESTE set (para no repetir si se corre dos veces).
+  // 3) Entregas ya hechas (idempotencia).
   const { data: existing } = await admin
     .from('prediction_deliveries')
     .select('user_id, prediction_id')
@@ -57,19 +63,24 @@ export async function sendTodaysPredictions(matchDate?: string): Promise<SendRes
     deliveredByUser.set(row.user_id, list)
   }
 
-  // 4) Suscripciones activas.
+  // 4) Suscripciones activas + correos.
   const { data: subs } = await admin
     .from('subscriptions')
     .select('id, user_id, daily_rate, remaining_predictions')
     .eq('status', 'active')
 
-  const newDeliveries: { prediction_id: string; user_id: string }[] = []
-  const subUpdates: { id: string; remaining: number; expired: boolean }[] = []
+  const userIds = [...new Set((subs ?? []).map((s) => s.user_id))]
+  const { data: profiles } = await admin
+    .from('profiles')
+    .select('id, email')
+    .in('id', userIds.length ? userIds : ['00000000-0000-0000-0000-000000000000'])
+  const emailByUser = new Map((profiles ?? []).map((p) => [p.id, p.email]))
+
   let usersNotified = 0
   let totalDeliveries = 0
   let expiredUsers = 0
+  let emailsFailed = 0
 
-  // 5) Por cada suscripción, decidir qué recibe (LÓGICA PURA YA TESTEADA).
   for (const sub of subs ?? []) {
     const { toDeliver, newRemaining, expired } = selectPredictionsForUser({
       dailyRate: sub.daily_rate,
@@ -80,34 +91,75 @@ export async function sendTodaysPredictions(matchDate?: string): Promise<SendRes
 
     if (toDeliver.length === 0) continue
 
-    for (const p of toDeliver) {
-      newDeliveries.push({ prediction_id: p.id, user_id: sub.user_id })
+    const email = emailByUser.get(sub.user_id)
+    if (!email) {
+      emailsFailed += 1
+      continue
     }
-    subUpdates.push({ id: sub.id, remaining: newRemaining, expired })
-    usersNotified += 1
-    totalDeliveries += toDeliver.length
-    if (expired) expiredUsers += 1
-  }
 
-  // 6) Registrar entregas PRIMERO (la restricción única evita duplicados).
-  if (newDeliveries.length > 0) {
-    const { error } = await admin.from('prediction_deliveries').insert(newDeliveries)
-    if (error) return { ok: false, error: 'Error al registrar entregas: ' + error.message }
-  }
+    // 5) Descargar de Storage los PDFs que le tocan y prepararlos como adjuntos.
+    const attachments: { filename: string; content: string }[] = []
+    const titles: { position: number; title: string }[] = []
+    let pdfsOk = true
 
-  // 7) Luego descontar saldo y marcar vencidas.
-  for (const u of subUpdates) {
+    for (const d of toDeliver) {
+      const full = predMap.get(d.id)!
+      titles.push({ position: full.position, title: full.title })
+
+      if (!full.pdf_path) {
+        pdfsOk = false
+        break
+      }
+      const { data: file, error } = await admin.storage.from(PDF_BUCKET).download(full.pdf_path)
+      if (error || !file) {
+        pdfsOk = false
+        break
+      }
+      const buffer = Buffer.from(await file.arrayBuffer())
+      attachments.push({
+        filename: `pronostico-${full.position}.pdf`,
+        content: buffer.toString('base64'),
+      })
+    }
+
+    // Si falta algún PDF, NO enviamos incompleto ni cobramos: se reintenta luego.
+    if (!pdfsOk) {
+      emailsFailed += 1
+      continue
+    }
+
+    const { subject, html } = dailyPredictionsEmail({ items: titles, date })
+
+    // Enviar PRIMERO; solo si sale, registrar.
+    const sent = await sendEmail({ to: email, subject, html, attachments })
+    if (!sent.ok) {
+      emailsFailed += 1
+      continue
+    }
+
+    await admin
+      .from('prediction_deliveries')
+      .insert(toDeliver.map((d) => ({ prediction_id: d.id, user_id: sub.user_id })))
+
     await admin
       .from('subscriptions')
       .update({
-        remaining_predictions: u.remaining,
-        status: u.expired ? 'expired' : 'active',
-        expired_at: u.expired ? new Date().toISOString() : null,
+        remaining_predictions: newRemaining,
+        status: expired ? 'expired' : 'active',
+        expired_at: expired ? new Date().toISOString() : null,
       })
-      .eq('id', u.id)
+      .eq('id', sub.id)
+
+    usersNotified += 1
+    totalDeliveries += toDeliver.length
+
+    if (expired) {
+      expiredUsers += 1
+      const exp = subscriptionExpiredEmail()
+      await sendEmail({ to: email, subject: exp.subject, html: exp.html })
+    }
   }
 
-  // (En la Fase 6 aquí se enviarán los correos reales a usersNotified.)
   return {
     ok: true,
     date,
@@ -115,5 +167,6 @@ export async function sendTodaysPredictions(matchDate?: string): Promise<SendRes
     usersNotified,
     totalDeliveries,
     expiredUsers,
+    emailsFailed,
   }
 }

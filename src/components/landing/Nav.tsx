@@ -5,7 +5,13 @@ import { signOut } from '@/app/(auth)/actions'
 
 type NavUser = { email?: string } | null
 
-export default function Nav({ user }: { user: NavUser }) {
+export default function Nav({
+  user,
+  predictionsLeft,
+}: {
+  user: NavUser
+  predictionsLeft?: number | null
+}) {
   const toPlanes = () => document.getElementById('planes')?.scrollIntoView({ behavior: 'smooth' })
 
   return (
@@ -26,6 +32,14 @@ export default function Nav({ user }: { user: NavUser }) {
         <div className="nav-auth">
           {user ? (
             <>
+              {predictionsLeft != null && (
+                <span className="nav-credits" title="Pronósticos restantes">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13 2L3 14h7l-1 8 10-12h-7z" />
+                  </svg>
+                  {predictionsLeft}
+                </span>
+              )}
               <span className="nav-avatar" title={user.email}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="8" r="4" />
