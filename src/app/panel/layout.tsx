@@ -26,6 +26,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           <span>Panel · CAX<b>ANDRA</b></span>
         </div>
         <nav className="panel-nav">
+          <Link href="/">← Volver</Link>
           <Link href="/panel">Pronósticos</Link>
           <Link href="/panel/personalizados">Personalizados</Link>
         </nav>

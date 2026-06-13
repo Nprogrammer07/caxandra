@@ -429,3 +429,20 @@ a.nav-cta{text-decoration:none}
 .order-feedback{margin-top:6px;font-size:.85rem;font-family:var(--font-d)}
 .order-feedback.err{color:#ff9b9b}
 .order-feedback.ok{color:var(--neon)}
+
+/* modal de servicios */
+.svc-feats{list-style:none;display:flex;flex-direction:column;gap:9px;padding:0}
+.svc-feats li{display:flex;gap:9px;color:var(--white);font-size:.9rem;align-items:flex-start}
+.svc-feats li::before{content:'✓';color:var(--neon);font-weight:700}
+.svc-note{font-size:.82rem;color:#ffcf6b;background:rgba(255,180,60,.06);
+  border:1px solid rgba(255,180,60,.25);border-radius:10px;padding:10px 12px}
+.svc-input{width:100%;background:rgba(255,255,255,.02);border:1px solid var(--border);
+  border-radius:9px;padding:11px 13px;color:var(--white);font-family:var(--font-b);font-size:.92rem}
+.svc-input:focus{outline:none;border-color:var(--neon)}
+.svc-login{display:flex;flex-direction:column;gap:12px}
+.svc-login a.btn{text-decoration:none}
+.svc-feedback{font-size:.9rem;font-family:var(--font-d)}
+.svc-feedback.ok{color:var(--neon)}
+.svc-feedback.err{color:#ff9b9b}
+
+.panel-nav a:first-child{color:var(--neon)}

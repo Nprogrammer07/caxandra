@@ -1,8 +1,20 @@
 'use client'
 
-const toPlanes = () => document.getElementById('planes')?.scrollIntoView({ behavior: 'smooth' })
+import { useState } from 'react'
+import ServiceModal from './ServiceModal'
 
-export default function Modules() {
+type Service = { slug: string; name: string; price_usd: number }
+
+export default function Modules({
+  isLoggedIn,
+  services,
+}: {
+  isLoggedIn: boolean
+  services: Service[]
+}) {
+  const [open, setOpen] = useState<string | null>(null)
+  const find = (s: string) => services.find((x) => x.slug === s)
+
   return (
     <section id="modulos">
       <div className="eyebrow">Herramientas</div>
@@ -18,7 +30,7 @@ export default function Modules() {
           </div>
           <h3>ANÁLISIS PERSONALIZADO</h3>
           <p>Analiza tus partidos favoritos y recibe insights exclusivos.</p>
-          <button className="btn btn-ghost" onClick={toPlanes}>Explorar módulo →</button>
+          <button className="btn btn-ghost" onClick={() => setOpen('analisis')}>Explorar módulo →</button>
         </div>
 
         <div className="mcard">
@@ -31,9 +43,18 @@ export default function Modules() {
           </div>
           <h3>SEMINARIO ESPECIALIZADO</h3>
           <p>Aprende estrategias avanzadas de análisis deportivo.</p>
-          <button className="btn btn-ghost" onClick={toPlanes}>Explorar seminario →</button>
+          <button className="btn btn-ghost" onClick={() => setOpen('seminario')}>Explorar seminario →</button>
         </div>
       </div>
+
+      {open && (
+        <ServiceModal
+          slug={open}
+          service={find(open)}
+          isLoggedIn={isLoggedIn}
+          onClose={() => setOpen(null)}
+        />
+      )}
     </section>
   )
 }

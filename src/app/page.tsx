@@ -24,6 +24,11 @@ export default async function Home() {
     predictionsLeft = sub?.remaining_predictions ?? null
   }
 
+  const { data: services } = await supabase
+    .from('services')
+    .select('slug, name, price_usd')
+    .eq('active', true)
+
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -52,7 +57,7 @@ export default async function Home() {
           <div className="col-main">
             <Reveal><Hero /></Reveal>
             <Reveal><Videos /></Reveal>
-            <Reveal><Modules /></Reveal>
+            <Reveal><Modules isLoggedIn={!!user} services={services ?? []} /></Reveal>
           </div>
           <aside className="col-side" id="planes">
             <Reveal><PlansPanel packages={packages ?? []} /></Reveal>
