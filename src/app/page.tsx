@@ -60,7 +60,7 @@ export default async function Home() {
             <Reveal><Modules isLoggedIn={!!user} services={services ?? []} /></Reveal>
           </div>
           <aside className="col-side" id="planes">
-            <Reveal><PlansPanel packages={packages ?? []} /></Reveal>
+            <Reveal><PlansPanel isLoggedIn={!!user} /></Reveal>
           </aside>
         </div>
       </div>

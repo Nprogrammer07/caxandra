@@ -2,35 +2,56 @@
 
 import { useState } from 'react'
 import BuyModal from './BuyModal'
-import type { Package } from '@/types'
 
-export default function PlansPanel({ packages }: { packages: Package[] }) {
-  const [buy, setBuy] = useState<{ id: string; plan: string; price: string } | null>(null)
+type Buy = { slug: string; name: string; price: string }
+
+export default function PlansPanel({ isLoggedIn }: { isLoggedIn: boolean }) {
+  const [buy, setBuy] = useState<Buy | null>(null)
 
   return (
     <>
       <div className="plans">
         <div className="plans-head">PLANES PREMIUM</div>
 
-        {packages.map((pkg) => {
-          // El plan de 90 (ritmo 3) lo marcamos como destacado.
-          const featured = pkg.daily_rate === 3
-          return (
-            <div key={pkg.id} className={`plan${featured ? ' featured' : ''}`}>
-              {featured && <div className="ribbon">POPULAR</div>}
-              <div className="qty">{pkg.total_predictions} PREDICCIONES</div>
-              <div className="per">Mensuales</div>
-              <div className="price"><span className="cur">$</span>{pkg.price_usd.toFixed(2)}</div>
-              <div className="unit">USD / mes</div>
-              <button
-                className={`btn ${featured ? 'btn-primary' : 'btn-ghost'} buy`}
-                onClick={() => setBuy({ id: pkg.id, plan: pkg.name, price: pkg.price_usd.toFixed(2) })}
-              >
-                <CardIcon /> Comprar con Crypto
-              </button>
-            </div>
-          )
-        })}
+        <div className="plan">
+          <div className="qty">30 PREDICCIONES</div>
+          <div className="per">Mensuales</div>
+          <div className="price"><span className="cur">$</span>1.99</div>
+          <div className="unit">USD / mes</div>
+          <button
+            className="btn btn-ghost buy"
+            onClick={() => setBuy({ slug: 'p30', name: '30 Predicciones Mensuales', price: '1.99' })}
+          >
+            <CardIcon /> Comprar con Crypto
+          </button>
+        </div>
+
+        <div className="plan featured">
+          <div className="ribbon">POPULAR</div>
+          <div className="qty">90 PREDICCIONES</div>
+          <div className="per">Mensuales</div>
+          <div className="price"><span className="cur">$</span>4.99</div>
+          <div className="unit">USD / mes</div>
+          <button
+            className="btn btn-primary buy"
+            onClick={() => setBuy({ slug: 'p90', name: '90 Predicciones Mensuales', price: '4.99' })}
+          >
+            <CardIcon /> Comprar con Crypto
+          </button>
+        </div>
+
+        <div className="plan">
+          <div className="qty">240 PREDICCIONES</div>
+          <div className="per">Mensuales</div>
+          <div className="price"><span className="cur">$</span>8.99</div>
+          <div className="unit">USD / mes</div>
+          <button
+            className="btn btn-ghost buy"
+            onClick={() => setBuy({ slug: 'p240', name: '240 Predicciones Mensuales', price: '8.99' })}
+          >
+            <CardIcon /> Comprar con Crypto
+          </button>
+        </div>
 
         <div className="secure">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -41,7 +62,15 @@ export default function PlansPanel({ packages }: { packages: Package[] }) {
         </div>
       </div>
 
-      {buy && <BuyModal packageId={buy.id} plan={buy.plan} price={buy.price} onClose={() => setBuy(null)} />}
+      {buy && (
+        <BuyModal
+          slug={buy.slug}
+          name={buy.name}
+          price={buy.price}
+          isLoggedIn={isLoggedIn}
+          onClose={() => setBuy(null)}
+        />
+      )}
     </>
   )
 }

@@ -16,7 +16,7 @@ const INFO: Record<string, { features: string[]; hasMatch: boolean; cta: string 
       'Te llega por correo electrónico',
     ],
     hasMatch: true,
-    cta: 'Comprar análisis',
+    cta: 'Pagar con cripto',
   },
   seminario: {
     features: [
@@ -25,7 +25,7 @@ const INFO: Record<string, { features: string[]; hasMatch: boolean; cta: string 
       'Acceso único, te llega por correo',
     ],
     hasMatch: false,
-    cta: 'Comprar seminario',
+    cta: 'Pagar con cripto',
   },
 }
 
@@ -49,6 +49,13 @@ export default function ServiceModal({
       document.body.style.overflow = ''
     }
   }, [])
+
+  // Cuando la acción crea la factura, redirige a NOWPayments.
+  useEffect(() => {
+    if (state?.ok && state.url) {
+      window.location.href = state.url
+    }
+  }, [state])
 
   const price = service ? Number(service.price_usd).toFixed(2) : ''
 
@@ -89,9 +96,7 @@ export default function ServiceModal({
               </div>
             </div>
           ) : state?.ok ? (
-            <div className="svc-feedback ok">
-              ✓ ¡Listo! Te enviaremos tu {service?.name?.toLowerCase()} por correo.
-            </div>
+            <div className="svc-feedback ok">✓ Redirigiendo a la pasarela de pago…</div>
           ) : (
             <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <input type="hidden" name="slug" value={slug} />
