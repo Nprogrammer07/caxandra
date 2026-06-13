@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 // Dirección de PRUEBAS de Resend. Cámbiala por tu dominio verificado luego.
-const FROM = 'Caxandra <pronosticos@caxandra.com>'
+const FROM = 'Caxandra <pronosticos@caxandra.com> '
 
 // Adjuntos: el contenido va en Base64.
 type Attachment = { filename: string; content: string }
