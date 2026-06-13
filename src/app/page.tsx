@@ -13,6 +13,7 @@ export default async function Home() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   let predictionsLeft: number | null = null
+  let isAdmin = false
   if (user) {
     const { data: sub } = await supabase
       .from('subscriptions')
@@ -21,6 +22,15 @@ export default async function Home() {
       .eq('status', 'active')
       .maybeSingle()
     predictionsLeft = sub?.remaining_predictions ?? null
+  }
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+    isAdmin = profile?.is_admin ?? false
   }
 
   const { data: packages } = await supabase
@@ -32,7 +42,11 @@ export default async function Home() {
   return (
     <>
       <Background />
-      <Nav user={user ? { email: user.email } : null} predictionsLeft={predictionsLeft} />
+      <Nav 
+        user={user ? { email: user.email } : null} 
+        predictionsLeft={predictionsLeft}
+        isAdmin={isAdmin}
+      />
       <div className="wrap">
         <div className="layout">
           <div className="col-main">

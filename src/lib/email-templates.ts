@@ -18,13 +18,12 @@ function shell(inner: string): string {
       </div>
       <div style="padding:28px">${inner}</div>
       <div style="padding:18px 28px;border-top:1px solid rgba(255,255,255,0.08);color:#5c655c;font-size:11px">
-        Recibes este correo porque tienes una suscripción activa en Caxandra.
+        Recibes este correo por tu actividad en Caxandra.
       </div>
     </div>
   </div>`
 }
 
-// Correo corto: mensaje + lista de títulos. Los PDFs van como ADJUNTOS (en la acción).
 export function dailyPredictionsEmail({
   items,
   date,
@@ -63,6 +62,27 @@ export function subscriptionExpiredEmail(): { subject: string; html: string } {
 
   return {
     subject: 'Tu suscripción de Caxandra se agotó',
+    html: shell(inner),
+  }
+}
+
+export function serviceDeliveryEmail({
+  serviceName,
+  requestText,
+  message,
+}: {
+  serviceName: string
+  requestText?: string
+  message?: string
+}): { subject: string; html: string } {
+  const inner = `
+    <h1 style="font-size:20px;color:#f4f7f3;margin:0 0 10px">Tu ${escapeHtml(serviceName)} está listo</h1>
+    ${requestText ? `<p style="color:#8c958b;font-size:13px;margin:0 0 14px">Solicitud: ${escapeHtml(requestText)}</p>` : ''}
+    <p style="color:#c8d0c8;font-size:14px;line-height:1.6">Adjuntamos el contenido en PDF. ¡Gracias por confiar en Caxandra!</p>
+    ${message ? `<div style="margin-top:14px;padding:14px;border:1px solid rgba(184,255,32,0.2);border-radius:10px;color:#c8d0c8;font-size:14px;line-height:1.5">${escapeHtml(message)}</div>` : ''}`
+
+  return {
+    subject: `Tu ${serviceName} · Caxandra`,
     html: shell(inner),
   }
 }
