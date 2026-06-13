@@ -1,0 +1,29 @@
+name: CI
+
+# Cuándo corre: en cada push a main y en cada pull request.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) Baja tu código.
+      - uses: actions/checkout@v4
+
+      # 2) Prepara Node 20 (con caché de dependencias para ir más rápido).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # 3) Instala exactamente lo del package-lock.
+      - run: npm ci
+
+      # 4) Revisa que no haya errores de TypeScript.
+      - run: npx tsc --noEmit
+
+      # 5) Corre la batería de tests.
+      - run: npm run test:run
