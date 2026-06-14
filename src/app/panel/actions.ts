@@ -1,5 +1,6 @@
 'use server'
 
+import { requireAdmin } from '@/lib/requireAdmin'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
@@ -26,6 +27,7 @@ async function isAdmin(): Promise<boolean> {
 // ---- Pronósticos del día ----
 
 export async function savePrediction(formData: FormData): Promise<void> {
+  await requireAdmin()
   if (!(await isAdmin())) return
 
   const position = Number(formData.get('position'))
@@ -54,6 +56,7 @@ export async function savePrediction(formData: FormData): Promise<void> {
 }
 
 export async function sendToday(_prev: unknown, _formData: FormData) {
+  await requireAdmin()
   return await sendTodaysPredictions()
 }
 
@@ -65,6 +68,7 @@ export async function deliverServiceOrder(
   _prev: unknown,
   formData: FormData,
 ): Promise<DeliverResult> {
+  await requireAdmin()
   if (!(await isAdmin())) return { ok: false, error: 'No autorizado.' }
 
   const orderId = String(formData.get('orderId') ?? '')
