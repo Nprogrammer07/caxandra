@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { createInvoice } from '@/lib/nowpayments'
+import { validateServicePurchase } from '@/lib/payment-rules'
 
 export type PurchaseResult = { ok: true; url: string } | { ok: false; error: string }
 
@@ -27,12 +28,8 @@ export async function purchaseService(
     .single()
   if (!service || !service.active) return { ok: false, error: 'Servicio no disponible.' }
 
-  // 3) El análisis necesita el partido.
-  if (service.slug === 'analisis' && !requestText) {
-    return { ok: false, error: 'Escribe el partido que quieres que analicemos.' }
-  }
-
-  // 4) Servicios de una sola vez (seminario): bloquear si ya lo pagó.
+  // 3) ¿Ya tiene este servicio? (solo importa para los de una sola vez)
+  let alreadyOwned = false
   if (service.once_per_user) {
     const { data: existing } = await admin
       .from('service_orders')
@@ -41,10 +38,19 @@ export async function purchaseService(
       .eq('service_id', service.id)
       .in('status', ['paid', 'delivered'])
       .maybeSingle()
-    if (existing) return { ok: false, error: 'Ya adquiriste este servicio (es de una sola vez).' }
+    alreadyOwned = !!existing
   }
 
-  // 5) Orden PENDIENTE de pago (ya no 'paid'; pasa a 'paid' en el webhook).
+  // 4) Validar la compra con las reglas puras (testeadas).
+  const check = validateServicePurchase({
+    serviceSlug: service.slug,
+    requestText,
+    oncePerUser: service.once_per_user,
+    alreadyOwned,
+  })
+  if (!check.ok) return { ok: false, error: check.error }
+
+  // 5) Orden PENDIENTE de pago (pasa a 'paid' en el webhook al confirmarse).
   const { data: order, error: orderErr } = await admin
     .from('service_orders')
     .insert({

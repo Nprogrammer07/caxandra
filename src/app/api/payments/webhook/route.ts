@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { verifyIpnSignature } from '@/lib/nowpayments'
+import { decideFulfillment } from '@/lib/payment-rules'
 
 // crypto necesita el runtime de Node, y el webhook nunca se cachea.
 export const runtime = 'nodejs'
@@ -54,41 +55,43 @@ export async function POST(req: NextRequest) {
     })
     .eq('id', payment.id)
 
-  // 5) Activar SOLO si el pago está 'finished' y aún no se activó (idempotente).
-  if (status === 'finished' && !payment.fulfilled) {
-    if (payment.service_order_id) {
-      // Servicio (análisis/seminario): la orden pasa a 'paid' y aparece en el panel.
-      await admin
-        .from('service_orders')
-        .update({ status: 'paid' })
-        .eq('id', payment.service_order_id)
-    } else if (payment.package_id) {
-      // Plan: crear la suscripción (la mejora reemplaza la anterior).
-      const { data: pkg } = await admin
-        .from('packages')
-        .select('daily_rate, total_predictions')
-        .eq('id', payment.package_id)
-        .single()
-      if (pkg) {
-        await admin
-          .from('subscriptions')
-          .update({ status: 'expired', expired_at: new Date().toISOString() })
-          .eq('user_id', payment.user_id)
-          .eq('status', 'active')
+  // 5) Decidir qué hacer con las reglas puras (testeadas).
+  const decision = decideFulfillment({
+    status,
+    alreadyFulfilled: payment.fulfilled,
+    serviceOrderId: payment.service_order_id,
+    packageId: payment.package_id,
+  })
 
-        await admin.from('subscriptions').insert({
-          user_id: payment.user_id,
-          package_id: payment.package_id,
-          daily_rate: pkg.daily_rate,
-          total_predictions: pkg.total_predictions,
-          remaining_predictions: pkg.total_predictions,
-          status: 'active',
-        })
-      }
-    }
-
-    // Marcar el pago como cumplido para no activar dos veces.
+  if (decision.action === 'activate_service') {
+    // Servicio (análisis/seminario): la orden pasa a 'paid' y aparece en el panel.
+    await admin.from('service_orders').update({ status: 'paid' }).eq('id', decision.serviceOrderId)
     await admin.from('payments').update({ fulfilled: true }).eq('id', payment.id)
+  } else if (decision.action === 'create_subscription') {
+    // Plan: crear la suscripción (la mejora reemplaza la anterior).
+    const { data: pkg } = await admin
+      .from('packages')
+      .select('daily_rate, total_predictions')
+      .eq('id', decision.packageId)
+      .single()
+    if (pkg) {
+      await admin
+        .from('subscriptions')
+        .update({ status: 'expired', expired_at: new Date().toISOString() })
+        .eq('user_id', payment.user_id)
+        .eq('status', 'active')
+
+      await admin.from('subscriptions').insert({
+        user_id: payment.user_id,
+        package_id: decision.packageId,
+        daily_rate: pkg.daily_rate,
+        total_predictions: pkg.total_predictions,
+        remaining_predictions: pkg.total_predictions,
+        status: 'active',
+      })
+
+      await admin.from('payments').update({ fulfilled: true }).eq('id', payment.id)
+    }
   }
 
   // 6) Responder 200 para que NOWPayments no reintente.
