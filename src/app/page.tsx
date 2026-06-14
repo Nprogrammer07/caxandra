@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { getCatalog } from '@/lib/catalog'
 import Background from '@/components/landing/Background'
 import Nav from '@/components/landing/Nav'
 import Hero from '@/components/landing/Hero'
@@ -12,6 +13,7 @@ import Reveal from '@/components/landing/Reveal'
 export default async function Home() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const { packages, services } = await getCatalog()
   let predictionsLeft: number | null = null
   let isAdmin = false
   if (user) {
@@ -24,11 +26,6 @@ export default async function Home() {
     predictionsLeft = sub?.remaining_predictions ?? null
   }
 
-  const { data: services } = await supabase
-    .from('services')
-    .select('slug, name, price_usd')
-    .eq('active', true)
-
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -37,12 +34,6 @@ export default async function Home() {
       .single()
     isAdmin = profile?.is_admin ?? false
   }
-
-  const { data: packages } = await supabase
-    .from('packages')
-    .select('id, slug, name, total_predictions, daily_rate, price_usd')
-    .eq('active', true)
-    .order('sort_order')
 
   return (
     <>
