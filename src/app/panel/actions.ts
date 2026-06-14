@@ -1,7 +1,9 @@
 'use server'
 
 import { requireAdmin } from '@/lib/requireAdmin'
+import { revalidateTag } from 'next/cache'
 import { revalidatePath } from 'next/cache'
+import { extractYouTubeId } from '@/lib/youtube'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { colombiaToday } from '@/lib/date'
@@ -125,5 +127,22 @@ export async function deliverServiceOrder(
     .eq('id', orderId)
 
   revalidatePath('/panel/personalizados')
+  return { ok: true }
+}
+
+export type SaveVideoResult = { ok: true } | { ok: false; error: string }
+
+export async function saveWeeklyVideo(_prev: unknown, formData: FormData): Promise<SaveVideoResult> {
+  await requireAdmin()
+  const id = extractYouTubeId(String(formData.get('video') ?? ''))
+  if (!id) return { ok: false, error: 'No reconocí el enlace o ID de YouTube.' }
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('site_settings')
+    .upsert({ key: 'weekly_video', value: id, updated_at: new Date().toISOString() })
+  if (error) return { ok: false, error: error.message }
+
+  revalidateTag('catalog', 'max') // refresca el landing de inmediato
   return { ok: true }
 }

@@ -13,7 +13,7 @@ import Reveal from '@/components/landing/Reveal'
 export default async function Home() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { packages, services } = await getCatalog()
+  const { packages, services, weeklyVideoId } = await getCatalog()
   let predictionsLeft: number | null = null
   let isAdmin = false
   if (user) {
@@ -47,7 +47,7 @@ export default async function Home() {
         <div className="layout">
           <div className="col-main">
             <Reveal><Hero /></Reveal>
-            <Reveal><Videos /></Reveal>
+            <Reveal><Videos weeklyVideoId={weeklyVideoId} /></Reveal>
             <Reveal><Modules isLoggedIn={!!user} services={services ?? []} /></Reveal>
           </div>
           <aside className="col-side" id="planes">

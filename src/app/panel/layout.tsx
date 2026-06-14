@@ -29,6 +29,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           <Link href="/">← Volver</Link>
           <Link href="/panel">Pronósticos</Link>
           <Link href="/panel/personalizados">Personalizados</Link>
+          <Link href="/panel/video">Video semanal</Link>
         </nav>
         <form action={signOut}>
           <button type="submit" className="panel-logout">Salir</button>
